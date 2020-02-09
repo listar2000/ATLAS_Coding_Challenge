@@ -125,7 +125,7 @@ class FloodfillError(Exception):
     pass
 
 
-def floodfill(picked_points_id, pcd, batch_size=10, angle_error_tolerance=0.4, boundary_thickness=0.1):
+def floodfill(picked_points_id, pcd, batch_size=10, angle_error_tolerance=0.4, boundary_thickness=0.1, custom_input=False):
     '''
     Floodfill until a given line is hit
     :param picked_points_id: list of points that user picked
@@ -135,7 +135,12 @@ def floodfill(picked_points_id, pcd, batch_size=10, angle_error_tolerance=0.4, b
     :param boundary_thickness: how close to the boundary do we consider a point to hit the boundary
     :return: resulting surface are within the floodfilling reach of the current boudning line and seed point
     '''
-    if len(picked_points_id) != 3:
+
+    '''
+    Edited by Star: I modify this function so floodfill can be used for both selected points in the canvas
+    and the user custom input x, y, z values
+    '''
+    if not custom_input and len(picked_points_id) != 3:
         raise FloodfillError(
             "ERROR: {} points is chosen, only 3 point floodfill is implemented".format(len(picked_points_id)))
     # set up
@@ -143,6 +148,11 @@ def floodfill(picked_points_id, pcd, batch_size=10, angle_error_tolerance=0.4, b
     pcd.estimate_normals()
     normals = np.asarray(pcd.normals)
     coordinates = np.asarray(pcd.points)
+
+    if custom_input:
+        picked_points_id[0] = pcd_tree.search_knn_vector_3d(picked_points_id[:3], 1)[1][0]
+        picked_points_id[1] = pcd_tree.search_knn_vector_3d(picked_points_id[3:6], 1)[1][0]
+        picked_points_id[2] = pcd_tree.search_knn_vector_3d(picked_points_id[6:9], 1)[1][0]
 
     bounding_line = BoundingLine(coordinates[picked_points_id[0]], coordinates[picked_points_id[1]])
     seed_id = picked_points_id[2]
@@ -281,7 +291,7 @@ def prompt_deleting(segmentations):
     form.addRow(q_dialog_buttonbox)
 
     # delete flag is used to indicate whether delete is confirmed or cancelled
-    deleteFlag = None
+    deleteFlag = False
 
     def btn_delete_clicked():
         nonlocal deleteFlag
@@ -299,7 +309,47 @@ def prompt_deleting(segmentations):
     dialog.exec_()
     return {"delete": deleteFlag, 
             "segment_index": combo_box.currentIndex()}
+
+def prompt_custom_input():
+    dialog = QDialog()
+    dialog.setWindowTitle("Custom input x, y, z")
+    form = QFormLayout(dialog)
+    # need three points (9 integers)
+    data_inputs = [QLineEdit() for _ in range(9)]
+    form.addRow(QLabel("point 1 x:"), data_inputs[0])
+    form.addRow(QLabel("point 1 y:"), data_inputs[1])
+    form.addRow(QLabel("point 1 z:"), data_inputs[2])
+    form.addRow(QLabel("point 2 x:"), data_inputs[3])
+    form.addRow(QLabel("point 2 y:"), data_inputs[4])
+    form.addRow(QLabel("point 2 z:"), data_inputs[5])
+    form.addRow(QLabel("point 3 x:"), data_inputs[6])
+    form.addRow(QLabel("point 3 y:"), data_inputs[7])
+    form.addRow(QLabel("point 3 z:"), data_inputs[8])
+
+    q_dialog_buttonbox = QDialogButtonBox()
+    btn_cancel = q_dialog_buttonbox.addButton(QDialogButtonBox.Cancel)
+    btn_ok = q_dialog_buttonbox.addButton(QDialogButtonBox.Ok)
+    form.addRow(q_dialog_buttonbox)
+
+    # whether we proceed or cancel
+    confirmFlag = False
+
+    def btn_ok_clicked():
+        nonlocal confirmFlag
+        confirmFlag = True
+        dialog.close()
+
+    def btn_cancel_clicked():
+        nonlocal confirmFlag
+        confirmFlag = False
+        dialog.close()
+
+    btn_ok.clicked.connect(btn_ok_clicked)
+
+    btn_cancel.clicked.connect(btn_cancel_clicked)
     
+    dialog.exec_()
+    return {"points_data": [data_input.text() for data_input in data_inputs], "confirmFlag": confirmFlag}
 
 '''
 Added by Star: handy function that checks that a list contain all identical elements

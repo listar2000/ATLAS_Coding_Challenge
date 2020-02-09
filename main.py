@@ -5,7 +5,7 @@ import PyQt5.QtCore as core
 import sys
 from vispy import scene
 import vispy.scene
-from custom_util import prompt_saving, prompt_deleting, \
+from custom_util import prompt_saving, prompt_deleting, prompt_custom_input, \
 floodfill, crop_reserve, crop_remove, FloodfillError, Scene, identical_list
 from models import Segment
 import os
@@ -75,6 +75,7 @@ class AtlasAnnotationTool(QWidget):
 
         self.btn_apply.clicked.connect(self.btn_apply_clicked)
         self.btn_combine.clicked.connect(self.btn_combine_clicked)
+        self.btn_custom_input.clicked.connect(self.btn_custom_input_clicked)
 
     def wireWidgets(self):
         # scene wiring
@@ -94,6 +95,7 @@ class AtlasAnnotationTool(QWidget):
         self.checkbox_list = self.base_form.checkBoxList
         self.btn_apply = self.base_form.apply_button
         self.btn_combine = self.base_form.combine_button
+        self.btn_custom_input = self.base_form.custom_input
 
         # Floodfill wiring
         tab_floodfill = self.base_form.system_mode_layout.itemAt(0).widget()
@@ -163,9 +165,6 @@ class AtlasAnnotationTool(QWidget):
         pcd = self.upperScene.pcd
         points = np.asarray(pcd.points)
         colors = np.asarray(pcd.colors) 
-
-        for point_id in self.selected_points_id:
-            colors[point_id] = self.selected_colors_original[point_id]
         
         self.upperScene.marker.set_data(points, edge_color=colors, face_color=colors, size=self.point_size)
 
@@ -176,6 +175,7 @@ class AtlasAnnotationTool(QWidget):
         Added by Star Li: the highlighted points resume their original color once they are 
         no longer selected.
         '''
+        self.resume_selected_points()
 
     def btn_floodfill_cancel_clicked(self):
         '''
@@ -437,6 +437,39 @@ class AtlasAnnotationTool(QWidget):
             feeds.append(entry)
             with open(self.data_fname, mode='w') as f:
                 f.write(json.dumps(feeds, indent=2))
+    
+    '''
+    Added by Star: the below function is used to show cropped region given user custom input
+    '''
+    def btn_custom_input_clicked(self):
+        data = prompt_custom_input()
+        if not data["confirmFlag"]:
+            self.writeMessage("Custom input is cancelled")
+            return
+        if self.upperScene.pcd == None:
+            self.writeMessage("Please load data before user custom input")
+            return
+
+        try:
+            points_data = [float(num) for num in data["points_data"]]  
+        except Exception as e:
+            self.writeMessage("User input need to be int/float")
+
+        try:
+            surface_to_crop = floodfill(points_data, self.upperScene.pcd, custom_input=True)
+            self.current_result_point_indices = surface_to_crop
+            new_pcd = crop_reserve(self.upperScene.pcd, surface_to_crop)
+            self.lowerScene.render(new_pcd)
+
+        except Exception as e:
+            self.writeMessage(str(e))
+
+        pcd = self.upperScene.pcd
+        points = np.asarray(pcd.points)
+        colors = np.asarray(pcd.colors) 
+        
+        self.upperScene.marker.set_data(points, edge_color=colors, face_color=colors, size=self.point_size)
+
 
     ####### UTILITIES FUNCTIONS #######
 

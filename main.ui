@@ -1,214 +1,224 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
-    <class>Dialog</class>
-    <widget class="QDialog" name="Dialog">
-        <property name="geometry">
-            <rect>
-                <x>0</x>
-                <y>0</y>
-                <width>1377</width>
-                <height>759</height>
-            </rect>
-        </property>
-        <property name="sizePolicy">
-            <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-            </sizepolicy>
-        </property>
-        <property name="windowTitle">
-            <string>Dialog</string>
-        </property>
-        <layout class="QGridLayout" name="gridLayout">
-            <item row="0" column="0" rowspan="2">
-                <layout class="QGridLayout" name="data_display_window">
-                    <item row="1" column="0">
-                        <widget class="QWidget" name="top" native="true"/>
-                    </item>
-                    <item row="2" column="0">
-                        <widget class="QWidget" name="lower" native="true"/>
-                    </item>
-                </layout>
-            </item>
-            <item row="0" column="1">
-                <layout class="QVBoxLayout" name="system_mode_layout">
-                    <item>
-                        <widget class="QTabWidget" name="system_mode">
-                            <property name="enabled">
-                                <bool>true</bool>
-                            </property>
-                            <property name="cursor">
-                                <cursorShape>OpenHandCursor</cursorShape>
-                            </property>
-                            <property name="autoFillBackground">
-                                <bool>false</bool>
-                            </property>
-                            <property name="tabShape">
-                                <enum>QTabWidget::Rounded</enum>
-                            </property>
-                            <property name="currentIndex">
-                                <number>1</number>
-                            </property>
-                            <property name="iconSize">
-                                <size>
-                                    <width>16</width>
-                                    <height>16</height>
-                                </size>
-                            </property>
-                            <widget class="QWidget" name="floodfill">
-                                <attribute name="title">
-                                    <string>Floodfill</string>
-                                </attribute>
-                                <layout class="QVBoxLayout" name="verticalLayout_2">
-                                    <item>
-                                        <layout class="QVBoxLayout" name="verticalLayout">
-                                            <item>
-                                                <widget class="QPushButton" name="btn_floodfill_done">
-                                                    <property name="text">
-                                                        <string>Done</string>
-                                                    </property>
-                                                    <property name="autoDefault">
-                                                        <bool>false</bool>
-                                                    </property>
-                                                </widget>
-                                            </item>
-                                            <item>
-                                                <widget class="QPushButton" name="btn_floodfill_cancel">
-                                                    <property name="text">
-                                                        <string>Cancel</string>
-                                                    </property>
-                                                    <property name="autoDefault">
-                                                        <bool>false</bool>
-                                                    </property>
-                                                </widget>
-                                            </item>
-                                        </layout>
-                                    </item>
-                                </layout>
-                            </widget>
-                            <widget class="QWidget" name="multiSegment">
-                                <attribute name="title">
-                                    <string>Multi Segments</string>
-                                </attribute>
-                                <widget class="QListWidget" name="checkBoxList">
-                                    <property name="geometry">
-                                        <rect>
-                                            <x>10</x>
-                                            <y>20</y>
-                                            <width>481</width>
-                                            <height>211</height>
-                                        </rect>
-                                    </property>
-                                    <property name="maximumSize">
-                                        <size>
-                                            <width>591</width>
-                                            <height>211</height>
-                                        </size>
-                                    </property>
-                                </widget>
-                                <widget class="QPushButton" name="apply_button">
-                                    <property name="geometry">
-                                        <rect>
-                                            <x>10</x>
-                                            <y>240</y>
-                                            <width>201</width>
-                                            <height>51</height>
-                                        </rect>
-                                    </property>
-                                    <property name="text">
-                                        <string>Apply</string>
-                                    </property>
-                                    <property name="autoDefault">
-                                        <bool>false</bool>
-                                    </property>
-                                </widget>
-                                <widget class="QPushButton" name="combine_button">
-                                    <property name="geometry">
-                                        <rect>
-                                            <x>210</x>
-                                            <y>240</y>
-                                            <width>201</width>
-                                            <height>51</height>
-                                        </rect>
-                                    </property>
-                                    <property name="text">
-                                        <string>Combine</string>
-                                    </property>
-                                    <property name="autoDefault">
-                                        <bool>false</bool>
-                                    </property>
-                                </widget>
-                            </widget>
-                        </widget>
-                    </item>
-                </layout>
-            </item>
-            <item row="1" column="1">
-                <layout class="QHBoxLayout" name="common_buttons_layout">
-                    <item>
-                        <widget class="QPushButton" name="common_save">
-                            <property name="text">
-                                <string>Save</string>
-                            </property>
-                            <property name="autoDefault">
-                                <bool>false</bool>
-                            </property>
-                        </widget>
-                    </item>
-                    <item>
-                        <widget class="QPushButton" name="common_load">
-                            <property name="text">
-                                <string>Load</string>
-                            </property>
-                            <property name="autoDefault">
-                                <bool>false</bool>
-                            </property>
-                        </widget>
-                    </item>
-                    <item>
-                        <widget class="QPushButton" name="common_delete">
-                            <property name="text">
-                                <string>Delete</string>
-                            </property>
-                            <property name="autoDefault">
-                                <bool>false</bool>
-                            </property>
-                        </widget>
-                    </item>
-                </layout>
-            </item>
-            <item row="2" column="0">
-                <layout class="QVBoxLayout" name="message_center_layout">
-                    <item>
-                        <widget class="QTextEdit" name="textEdit">
-                            <property name="enabled">
-                                <bool>true</bool>
-                            </property>
-                            <property name="sizeAdjustPolicy">
-                                <enum>QAbstractScrollArea::AdjustToContents</enum>
-                            </property>
-                            <property name="readOnly">
-                                <bool>true</bool>
-                            </property>
-                            <property name="overwriteMode">
-                                <bool>true</bool>
-                            </property>
-                            <property name="placeholderText">
-                                <string>&gt; Program Started, UI Loaded Correctly</string>
-                            </property>
-                        </widget>
-                    </item>
-                </layout>
-            </item>
-            <item row="2" column="1">
-                <layout class="QVBoxLayout" name="segmentation_layout">
-                    <item>
-                        <widget class="QListWidget" name="listWidget"/>
-                    </item>
-                </layout>
-            </item>
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1377</width>
+    <height>756</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0" rowspan="3">
+    <layout class="QGridLayout" name="data_display_window">
+     <item row="1" column="0">
+      <widget class="QWidget" name="top" native="true"/>
+     </item>
+     <item row="2" column="0">
+      <widget class="QWidget" name="lower" native="true"/>
+     </item>
+    </layout>
+   </item>
+   <item row="2" column="1">
+    <layout class="QHBoxLayout" name="common_buttons_layout">
+     <item>
+      <widget class="QPushButton" name="common_save">
+       <property name="text">
+        <string>Save</string>
+       </property>
+       <property name="autoDefault">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="common_load">
+       <property name="text">
+        <string>Load</string>
+       </property>
+       <property name="autoDefault">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="common_delete">
+       <property name="text">
+        <string>Delete</string>
+       </property>
+       <property name="autoDefault">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="3" column="0">
+    <layout class="QVBoxLayout" name="message_center_layout">
+     <item>
+      <widget class="QTextEdit" name="textEdit">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="sizeAdjustPolicy">
+        <enum>QAbstractScrollArea::AdjustToContents</enum>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+       <property name="overwriteMode">
+        <bool>true</bool>
+       </property>
+       <property name="placeholderText">
+        <string>&gt; Program Started, UI Loaded Correctly</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="3" column="1">
+    <layout class="QVBoxLayout" name="segmentation_layout">
+     <item>
+      <widget class="QListWidget" name="listWidget"/>
+     </item>
+    </layout>
+   </item>
+   <item row="0" column="1">
+    <layout class="QVBoxLayout" name="system_mode_layout">
+     <item>
+      <widget class="QTabWidget" name="system_mode">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="cursor">
+        <cursorShape>OpenHandCursor</cursorShape>
+       </property>
+       <property name="autoFillBackground">
+        <bool>false</bool>
+       </property>
+       <property name="tabShape">
+        <enum>QTabWidget::Rounded</enum>
+       </property>
+       <property name="currentIndex">
+        <number>1</number>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>16</width>
+         <height>16</height>
+        </size>
+       </property>
+       <widget class="QWidget" name="floodfill">
+        <attribute name="title">
+         <string>Floodfill</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout">
+           <item>
+            <widget class="QPushButton" name="btn_floodfill_done">
+             <property name="text">
+              <string>Done</string>
+             </property>
+             <property name="autoDefault">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btn_floodfill_cancel">
+             <property name="text">
+              <string>Cancel</string>
+             </property>
+             <property name="autoDefault">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
         </layout>
+       </widget>
+       <widget class="QWidget" name="multiSegment">
+        <attribute name="title">
+         <string>Multi Segments</string>
+        </attribute>
+        <widget class="QListWidget" name="checkBoxList">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>20</y>
+           <width>481</width>
+           <height>211</height>
+          </rect>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>591</width>
+           <height>211</height>
+          </size>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="apply_button">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>240</y>
+           <width>201</width>
+           <height>51</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Apply</string>
+         </property>
+         <property name="autoDefault">
+          <bool>false</bool>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="combine_button">
+         <property name="geometry">
+          <rect>
+           <x>210</x>
+           <y>240</y>
+           <width>201</width>
+           <height>51</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Combine</string>
+         </property>
+         <property name="autoDefault">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </widget>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="1" column="1">
+    <widget class="QPushButton" name="custom_input">
+     <property name="text">
+      <string>Custom Input</string>
+     </property>
+     <property name="autoDefault">
+      <bool>false</bool>
+     </property>
     </widget>
-    <resources/>
-    <connections/>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
 </ui>

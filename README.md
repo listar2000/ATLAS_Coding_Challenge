@@ -1,4 +1,16 @@
 # ATLAS_Coding_Challenge
+
+## Star's Submission:
+For this project, in addition to completing the basic requirements & stretch goal (custom input & delete functionality), I also implemented a custom function called `multi segments` which is described below.
+
+Observation:
+
+Due to precision (accuracy) issue with the current version of the software, sometimes it's hard to crop out an entire surface in one segment (selecting 3 points or giving custom user input). It would be helpful if we can, for example, firstly crop out different parts of a wall and then view/combine these segments together.
+
+Solution:
+
+`Multi Segment` function is designed to help with the iteration/integration of different segments. A checkbox list is created with a checkbox for each segment. By checking the segments you want to display together and press the `Apply` button, they will appear in the upper scene with the points highlighted (in green). Then, the `Combine` button can be used to combine the points (union) of multiple segments into one big segment and store the data into the `segments.json`
+
 ## I. Get Started
 #### A. Basics
 We do expect you to be familiar with Git. Please create your own repository for this coding challenge.
@@ -65,3 +77,4 @@ There are many tutorials/documentation online, feel free to use Google for more 
 
 #### Miscellaneous
 - If at any point, you have any questions or concerns, please email us at `wuxiaohua1011@berkeley.edu`, we'll get back to you ASAP.
+
