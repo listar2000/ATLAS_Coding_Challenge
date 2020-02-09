@@ -217,6 +217,10 @@ class Scene:
             points = np.asarray(pcd.points)
             colors = np.asarray(pcd.colors)
 
+            # for i in range(len(colors)):
+            #     colors[i] = (0, 1, 0)
+            # print(colors)
+
             self.marker = visuals.Markers()
             self.marker.set_gl_state('translucent', blend=True, depth_test=True)
             self.marker.set_data(points, edge_color=colors, face_color=colors, size=point_size)
@@ -255,3 +259,50 @@ def prompt_saving():
     return {"type_class": combo_box.currentText(),
             "seg_name": line_edit.text()}
 
+def prompt_deleting(segmentations):
+    dialog = QDialog()
+    dialog.setWindowTitle("Delete a segment")
+    form = QFormLayout(dialog)
+    combo_box = QComboBox()
+
+    # construct the text for selection when deleting
+    segments_text = []
+    for segment in segmentations:
+        segments_text.append("{} | {} | {}".format(segment.id, segment.segment_name, segment.type_class))
+
+    combo_box.addItems(segments_text)
+    q_dialog_buttonbox = QDialogButtonBox()
+    btn_cancel = q_dialog_buttonbox.addButton(QDialogButtonBox.Cancel)
+    btn_delete = q_dialog_buttonbox.addButton(QDialogButtonBox.Cancel)
+    btn_delete.setText("Delete")
+    # line_edit = QLineEdit()
+    # form.addRow(QLabel("Segment Name:"), line_edit)
+    form.addRow(QLabel("Segmentation Name:"), combo_box)
+    form.addRow(q_dialog_buttonbox)
+
+    # delete flag is used to indicate whether delete is confirmed or cancelled
+    deleteFlag = None
+
+    def btn_delete_clicked():
+        nonlocal deleteFlag
+        deleteFlag = True
+        dialog.close()
+
+    def btn_cancel_clicked():
+        nonlocal deleteFlag
+        deleteFlag = False
+        dialog.close()
+
+    btn_delete.clicked.connect(btn_delete_clicked)
+
+    btn_cancel.clicked.connect(btn_cancel_clicked)
+    dialog.exec_()
+    return {"delete": deleteFlag, 
+            "segment_index": combo_box.currentIndex()}
+    
+
+'''
+Added by Star: handy function that checks that a list contain all identical elements
+'''
+def identical_list(lst):
+    return lst.count(lst[0]) == len(lst)

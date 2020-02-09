@@ -1,10 +1,12 @@
 import numpy as np
 from PyQt5 import uic
 from PyQt5.QtWidgets import *
+import PyQt5.QtCore as core
 import sys
 from vispy import scene
 import vispy.scene
-from custom_util import prompt_saving, floodfill, crop_reserve, crop_remove, FloodfillError, Scene
+from custom_util import prompt_saving, prompt_deleting, \
+floodfill, crop_reserve, crop_remove, FloodfillError, Scene, identical_list
 from models import Segment
 import os
 import open3d as o3d
@@ -35,7 +37,7 @@ class AtlasAnnotationTool(QWidget):
         self.message_center = None
         self.segmentation_list = None
         self.btn_common_save = None
-        self.btn_common_load = None
+        self.btn_common_load = None 
         self.btn_common_delete = None
 
         # scene variable -- floodfill specific buttons
@@ -47,6 +49,12 @@ class AtlasAnnotationTool(QWidget):
         self.wireWidgets()
         self.setOnClickListener()
         self.populateSegmentList()
+
+        # added by Star Li: a dict for storing original colors of selected points
+        self.selected_colors_original = dict()
+
+        self.multi_segments_point_indices = set()
+        self.multi_segments_file_name = None
 
         # Demo
         # self.addSegmentationItems(["Placeholder 1", "Placeholder 2"])
@@ -65,6 +73,8 @@ class AtlasAnnotationTool(QWidget):
         self.btn_common_delete.clicked.connect(self.btn_delete_clicked)
         self.segmentation_list.itemDoubleClicked.connect(self.segmentation_list_item_double_clicked)
 
+        self.btn_apply.clicked.connect(self.btn_apply_clicked)
+        self.btn_combine.clicked.connect(self.btn_combine_clicked)
 
     def wireWidgets(self):
         # scene wiring
@@ -80,6 +90,10 @@ class AtlasAnnotationTool(QWidget):
         self.btn_common_save = self.base_form.common_buttons_layout.itemAt(0).widget()
         self.btn_common_load = self.base_form.common_buttons_layout.itemAt(1).widget()
         self.btn_common_delete = self.base_form.common_buttons_layout.itemAt(2).widget()
+
+        self.checkbox_list = self.base_form.checkBoxList
+        self.btn_apply = self.base_form.apply_button
+        self.btn_combine = self.base_form.combine_button
 
         # Floodfill wiring
         tab_floodfill = self.base_form.system_mode_layout.itemAt(0).widget()
@@ -145,8 +159,23 @@ class AtlasAnnotationTool(QWidget):
 
         except Exception as e:
             self.writeMessage(str(e))
+
+        pcd = self.upperScene.pcd
+        points = np.asarray(pcd.points)
+        colors = np.asarray(pcd.colors) 
+
+        for point_id in self.selected_points_id:
+            colors[point_id] = self.selected_colors_original[point_id]
+        
+        self.upperScene.marker.set_data(points, edge_color=colors, face_color=colors, size=self.point_size)
+
         self.writeMessage("Selected Points is cleared")
         self.selected_points_id = []
+
+        '''
+        Added by Star Li: the highlighted points resume their original color once they are 
+        no longer selected.
+        '''
 
     def btn_floodfill_cancel_clicked(self):
         '''
@@ -155,12 +184,61 @@ class AtlasAnnotationTool(QWidget):
         2. clear the lower scene
         '''
         self.writeMessage("Selected Segmentation Cancelled".format(len(self.selected_points_id)))
-        self.selected_points_id = []
         self.current_result_point_indices = []
         self.lowerScene.clear()
 
+        # added by Star: unselect points, resume their color and size to original ones
+        self.resume_selected_points()
+
     def btn_delete_clicked(self):
-        print("NOT IMPLEMENTED YET")
+        '''
+        Implemented by Star Li for the code challenge
+        When delete is clicked
+        1. Prompt a pop-up window with the same list of segmentations loaded
+        2. User can select which segmentations to delete or cancel this operation
+        3. Update the segmentations both in-memory and in the .json data file
+
+        Index reset is needed in order to keep track of the list of segments:
+        original segment id: 1 -> 2 -> 3 -> 4
+
+        delete segment with id = 2
+
+        after reset: 1 -> 2 (original 3) -> 3 (original 4)
+        '''
+        data = prompt_deleting(self.segmentations)
+        deleteFlag = data["delete"]
+
+        if not deleteFlag:
+            self.writeMessage("Delete is cancelled")
+            return
+        
+        import json
+
+        index = data["segment_index"]
+        delete_segment = self.segmentations[index]
+
+        new_segments = []
+
+        # reset means we re-order the indices of segments in case there are gaps due to deletion
+        count = 0
+        for segment in self.segmentations:    
+            if segment != delete_segment:
+                segment.id = count
+                new_segments.append(segment.json())
+                count += 1
+
+        with open(self.data_fname, mode='w') as f:
+            f.write(json.dumps(new_segments))
+        
+        # messages that will show up in the message center
+        self.writeMessage("Segment {} | {} | {} is deleted".format(delete_segment.id, delete_segment.segment_name, delete_segment.type_class))
+        self.writeMessage("Segments are reindexed")
+
+        # in order to sync with the .json file, clear the in-memory data and reload from file
+        self.segmentations = []
+        self.segmentation_list.clear()
+        self.checkbox_list.clear()
+        self.populateSegmentList()
 
     def btn_save_clicked(self):
         '''
@@ -205,6 +283,9 @@ class AtlasAnnotationTool(QWidget):
                     f.write(json.dumps(feeds, indent=2))
             self.lowerScene.clear()
 
+        # added by Star: unselect points, resume their color and size to original ones
+        self.resume_selected_points()
+
     def topCanvasClicked(self, event):
         '''
         When the top canvas is clicked
@@ -235,12 +316,12 @@ class AtlasAnnotationTool(QWidget):
                                                      2 * 10 + 1,
                                                      2 * 10 + 1),
                                                     bgcolor=vispy.color.ColorArray('red'))
-                self.upperScene.canvas.update()
-                # TODO make the dots appear
+                # self.upperScene.canvas.update()
             finally:
                 self.upperScene.marker.update_gl_state(blend=True)
                 self.upperScene.marker.antialias = 1
                 self.upperScene.marker.set_data(points, edge_color=colors, face_color=colors, size=self.point_size)
+
             # We pick the pixel directly under the click, unless it is
             # zero, in which case we look for the most common nonzero
             # pixel value in a square region centered on the click.
@@ -255,13 +336,126 @@ class AtlasAnnotationTool(QWidget):
             if idx > 0:
                 try:
                     points[idx]
-                    self.selected_points_id.append(idx)  # TODO how to you not add a point if it is index out of range
+                    self.selected_points_id.append(idx)
                     # p1.set_data(points, edge_color=colors, face_color=colors, size=2)
+
+                    sizes = np.full(len(points), self.point_size)
+
+                    # display the color of the selected points, keep the original colors in a dict
+                    self.selected_colors_original[idx] = np.array(colors[idx])
+                    for point_id in self.selected_points_id:
+                        # red color
+                        colors[point_id] = (1, 0, 0)
+                        # enlarge the size of selected points so they are more visible
+                        sizes[point_id] = 8
+   
+                    self.upperScene.marker.set_data(points, edge_color=colors, face_color=colors, size=sizes)
                     self.writeMessage("Selected Points {}".format(self.selected_points_id))
                 except IndexError:
                     self.writeMessage("The point {} is not in the point cloud".format(idx))
+    
+
+    '''
+    Added by Star:
+    below are the functions for the `multi-segment` utility which exhibits/combines different segments at the same time
+    '''
+    def btn_apply_clicked(self):
+        checked_segments = []
+        for index in range(self.checkbox_list.count()):
+            if self.checkbox_list.item(index).checkState() == core.Qt.Checked:
+                checked_segments.append(self.segmentations[index])
+        
+        if len(checked_segments) == 0:
+            self.writeMessage("No segment is selected")
+            return
+        
+        # check that all segments selected are for the same data file
+        fnames = [str(s.data_file_name) for s in checked_segments]
+        if not identical_list(fnames):
+            self.writeMessage("Error: segments selected belong to different data files")
+            self.writeMessage(set(fnames))
+            return
+        
+        fname = fnames[0]
+        self.multi_segments_file_name = fname
+        # reset the cache for indices of selected segments (for combination purpose)
+        self.multi_segments_point_indices.clear()
+
+        for segment in checked_segments:
+            self.multi_segments_point_indices.update(segment.indices)
+            
+        pcd = o3d.io.read_point_cloud(fname)
+        class DataPCDIsEmptyException(Exception):
+            pass
+        if pcd.is_empty():
+            raise DataPCDIsEmptyException("ERR: Data file at {} is cannot be found or is empty".format(fname))
+
+        color = np.asarray(pcd.colors)
+        for i in self.multi_segments_point_indices:
+            color[i] = (0, 1, 0)
+        pcd.colors = o3d.utility.Vector3dVector(color)
+
+        self.upperScene.render(pcd)
+
+        self.writeMessage("Segments: {} are displayed".format([s.segment_name for s in checked_segments]))
+
+    def btn_combine_clicked(self):
+        data = prompt_saving()
+
+        if len(self.multi_segments_point_indices) == 0:
+            self.writeMessage("No segments are selected to combine. Please apply first.")
+            return
+        
+        # reuse the codes in btn_save_clicked. Can be refractored later.
+        import json
+        a = []
+        if not os.path.isfile(self.data_fname):
+            self.largest_seg_id = self.largest_seg_id + 1
+            segment = Segment(id=self.largest_seg_id,
+                                data_file_name=self.current_data_file_name,
+                                segment_name=data["seg_name"],
+                                indices=self.multi_segments_point_indices,
+                                type_class=(data["type_class"], 1)
+                                )
+            self.addSegmentationItem(segment)
+            entry = segment.json()
+            a.append(entry)
+            with open(self.data_fname, mode='w') as f:
+                f.write(json.dumps(a, indent=2))
+        else:
+            with open(self.data_fname) as feedsjson:
+                feeds = json.load(feedsjson)
+            self.largest_seg_id = len(feeds)
+            segment = Segment(id=self.largest_seg_id,
+                                data_file_name=self.current_data_file_name,
+                                segment_name=data["seg_name"],
+                                indices=self.multi_segments_point_indices,
+                                type_class=(data["type_class"], 1)
+                                )
+            self.addSegmentationItem(segment)
+            entry = segment.json()
+            feeds.append(entry)
+            with open(self.data_fname, mode='w') as f:
+                f.write(json.dumps(feeds, indent=2))
 
     ####### UTILITIES FUNCTIONS #######
+
+    '''
+    Added by Star:
+    Once the selected points (highlighted) are cancelled/saved, resume their point size and color to the original ones
+    '''
+    def resume_selected_points(self):
+        pcd = self.upperScene.pcd
+        points = np.asarray(pcd.points)
+        colors = np.asarray(pcd.colors)
+
+        for index in self.selected_points_id:
+            colors[index] = self.selected_colors_original[index]
+                
+        self.upperScene.marker.set_data(points, edge_color=colors, face_color=colors, size=self.point_size)
+
+        self.selected_points_id.clear()
+        self.selected_colors_original.clear()
 
     def openFileNamesDialog(self):
         options = QFileDialog.Options()
@@ -283,6 +477,16 @@ class AtlasAnnotationTool(QWidget):
     def addSegmentationItem(self, segment):
         self.segmentations.append(segment)
         self.segmentation_list.addItem("{} | {} | {}".format(segment.id, segment.segment_name, segment.type_class))
+
+        '''
+        Added by Star: for the multi-segment functionality, a list of available segments (the same
+        as those in the right lower corner) will be given in checkbox form to visualize/combines
+        '''
+        item = QListWidgetItem()
+        item.setText("{} | {} | {}".format(segment.id, segment.segment_name, segment.type_class))
+        item.setFlags(item.flags() | core.Qt.ItemIsUserCheckable)
+        item.setCheckState(core.Qt.Unchecked)
+        self.checkbox_list.addItem(item)
 
     def writeMessage(self, message):
         '''
